@@ -5,7 +5,7 @@ var config = {
     physics: {
         default: 'arcade',
         arcade: {
-            debug: true
+            debug: false
         }
     },
     scene: {
@@ -21,9 +21,11 @@ var game = new Phaser.Game(config);
 var map;
 var player;
 var cursors;
-var groundLayer, coinLayer;
+var groundLayer;
 var text;
-var score = 0;
+
+var up_was_down = true;
+var up_down_idling = true;
 
 function preload() {
     // map made with Tiled in JSON format
@@ -42,16 +44,16 @@ function create() {
     // tiles for the ground layer
     var groundTiles = map.addTilesetImage('ratcage_floor1','tiles');
     // create the ground layer
-    groundLayer = map.createDynamicLayer('ground', groundTiles, 0, 500);
+    groundLayer = map.createDynamicLayer('ground', groundTiles, 0, 0);
     // the player will collide with this layer
     // groundLayer.setCollisionByExclusion([-1]);
 
     // set the boundaries of our game world
     this.physics.world.bounds.width = groundLayer.width;
-    this.physics.world.bounds.height = groundLayer.height + 500;
+    this.physics.world.bounds.height = groundLayer.height;
 
     // create the player sprite
-    player = this.physics.add.sprite(200, 200, 'player');
+    player = this.physics.add.sprite(200, 200, 'player').setScale(2);
     // player.setBounce(0.2); // our player will bounce from items
     player.setCollideWorldBounds(true); // don't go out of the map
     
@@ -64,14 +66,37 @@ function create() {
     //player walk animation
     this.anims.create({
         key: 'walk',
-        frames: this.anims.generateFrameNames('player', {prefix: 'ratrace_player', suffix: '.png', start: 0, end: 1}),
+        frames: this.anims.generateFrameNames('player', {prefix: 'ratplayer', suffix: '.png', start: 0, end: 2}),
+        frameRate: 10,
+        repeat: -1
+    });
+    this.anims.create({
+        key: 'walk_up',
+        frames: this.anims.generateFrameNames('player', {prefix: 'ratplayer', suffix: '.png', start: 3, end: 5}),
+        frameRate: 10,
+        repeat: -1
+    });
+    this.anims.create({
+        key: 'walk_down',
+        frames: this.anims.generateFrameNames('player', {prefix: 'ratplayer', suffix: '.png', start: 6, end: 8}),
         frameRate: 10,
         repeat: -1
     });
     // idle with only one frame, so repeat is not neaded
     this.anims.create({
         key: 'idle',
-        frames: [{key: 'player', frame: 'ratrace_player0.png'}],
+        frames: [{key: 'player', frame: 'ratplayer0.png'}],
+        frameRate: 10,
+    });
+    
+    this.anims.create({
+        key: 'idle_up',
+        frames: [{key: 'player', frame: 'ratplayer3.png'}],
+        frameRate: 10,
+    });
+    this.anims.create({
+        key: 'idle_down',
+        frames: [{key: 'player', frame: 'ratplayer6.png'}],
         frameRate: 10,
     });
 
@@ -79,7 +104,7 @@ function create() {
     cursors = this.input.keyboard.createCursorKeys();
 
     // set bounds so the camera won't go outside the game world
-    this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels + 500);
+    this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     // make the camera follow the player
     this.cameras.main.startFollow(player);
 
@@ -96,26 +121,37 @@ function create() {
 }
 
 function update(time, delta) {
+    if (cursors.up.isDown) {
+         up_down_idling = true;
+        player.body.setVelocityY(-200);
+        player.anims.play('walk_up', true);
+        up_was_down = true;
+    } else if (cursors.down.isDown) {
+        up_down_idling = true;
+        player.body.setVelocityY(200);
+        player.anims.play('walk_down', true);
+        up_was_down = false;
+    } else if (!cursors.left.isDown && !cursors.right.isDown) {
+        (up_was_down) ? player.anims.play('idle_up', true) : player.anims.play('idle_down', true);
+    }
+  
     if (cursors.left.isDown)
     {
         player.body.setVelocityX(-200);
         player.anims.play('walk', true); // walk left
         player.flipX = true; // flip the sprite to the left
+        up_down_idling = false;
     }
     else if (cursors.right.isDown)
     {
+        up_down_idling = false;
         player.body.setVelocityX(200);
         player.anims.play('walk', true);
         player.flipX = false; // use the original sprite looking to the right
-    } else {
-        player.anims.play('idle', true);
+    } else if (!cursors.down.isDown && !cursors.up.isDown) {
+        if (!up_down_idling) player.anims.play('idle', true);
     }
     
-    if (cursors.up.isDown) {
-        player.body.setVelocityY(-200);
-    } else if (cursors.down.isDown) {
-        player.body.setVelocityY(200);
-    }
     
     if (!cursors.down.isDown && !cursors.up.isDown) {
       player.body.setVelocityY(0);
