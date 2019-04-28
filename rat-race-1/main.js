@@ -16,16 +16,17 @@ var config = {
     }
 };
 
+const velocity = 200;
+
 var game = new Phaser.Game(config);
 
 var map;
 var player;
 var cursors;
-var groundLayer;
+var groundLayer, foodLayer;
 var text;
 
-var up_was_down = true;
-var up_down_idling = true;
+var last_direction = 'leftright';
 
 function preload() {
     // map made with Tiled in JSON format
@@ -44,9 +45,10 @@ function create() {
     // tiles for the ground layer
     var groundTiles = map.addTilesetImage('ratcage_floor1','tiles');
     // create the ground layer
-    groundLayer = map.createDynamicLayer('ground', groundTiles, 0, 0);
-    // the player will collide with this layer
-    // groundLayer.setCollisionByExclusion([-1]);
+    groundLayer = map.createStaticLayer('ground', groundTiles, 0, 0);
+    foodLayer = map.createDynamicLayer('food', groundTiles, 0, 0);
+    
+    foodLayer.setCollisionByExclusion([-1]);
 
     // set the boundaries of our game world
     this.physics.world.bounds.width = groundLayer.width;
@@ -54,14 +56,12 @@ function create() {
 
     // create the player sprite
     player = this.physics.add.sprite(200, 200, 'player').setScale(2);
-    // player.setBounce(0.2); // our player will bounce from items
     player.setCollideWorldBounds(true); // don't go out of the map
+    
+    this.physics.add.collider(foodLayer, player);
     
     // small fix to our player images, we resize the physics body object slightly
     // player.body.setSize(player.width, player.height-8);
-    
-    // player will collide with the level tiles
-    // this.physics.add.collider(groundLayer, player);
 
     //player walk animation
     this.anims.create({
@@ -84,7 +84,7 @@ function create() {
     });
     // idle with only one frame, so repeat is not neaded
     this.anims.create({
-        key: 'idle',
+        key: 'idle_leftright',
         frames: [{key: 'player', frame: 'ratplayer0.png'}],
         frameRate: 10,
     });
@@ -96,7 +96,7 @@ function create() {
     });
     this.anims.create({
         key: 'idle_down',
-        frames: [{key: 'player', frame: 'ratplayer6.png'}],
+        frames: [{key: 'player', frame: 'ratplayer8.png'}],
         frameRate: 10,
     });
 
@@ -108,8 +108,6 @@ function create() {
     // make the camera follow the player
     this.cameras.main.startFollow(player);
 
-    // set background color, so the sky is not black
-    this.cameras.main.setBackgroundColor('#ccccff');
 
     // this text will show the score
     text = this.add.text(20, 570, '0', {
@@ -121,43 +119,37 @@ function create() {
 }
 
 function update(time, delta) {
+    var lr_down = cursors.left.isDown || cursors.right.isDown;
     if (cursors.up.isDown) {
-         up_down_idling = true;
-        player.body.setVelocityY(-200);
-        player.anims.play('walk_up', true);
-        up_was_down = true;
+      last_direction = 'up';
+      player.body.setVelocityY(-velocity);
+      if (!lr_down) player.anims.play('walk_up', true);
     } else if (cursors.down.isDown) {
-        up_down_idling = true;
-        player.body.setVelocityY(200);
-        player.anims.play('walk_down', true);
-        up_was_down = false;
-    } else if (!cursors.left.isDown && !cursors.right.isDown) {
-        (up_was_down) ? player.anims.play('idle_up', true) : player.anims.play('idle_down', true);
+      last_direction = 'down';
+      player.body.setVelocityY(velocity);
+      if (!lr_down) player.anims.play('walk_down', true);
+    } else {
+      player.body.setVelocityY(0);
     }
   
     if (cursors.left.isDown)
     {
-        player.body.setVelocityX(-200);
+        player.body.setVelocityX(-velocity);
         player.anims.play('walk', true); // walk left
         player.flipX = true; // flip the sprite to the left
-        up_down_idling = false;
+        last_direction = 'leftright';
     }
     else if (cursors.right.isDown)
     {
-        up_down_idling = false;
         player.body.setVelocityX(200);
         player.anims.play('walk', true);
-        player.flipX = false; // use the original sprite looking to the right
+        player.flipX = false;
+        last_direction = 'leftright';
     } else if (!cursors.down.isDown && !cursors.up.isDown) {
-        if (!up_down_idling) player.anims.play('idle', true);
+         player.anims.play('idle_' + last_direction, true);
     }
     
-    
-    if (!cursors.down.isDown && !cursors.up.isDown) {
-      player.body.setVelocityY(0);
-    }
-    
-    if (!cursors.left.isDown && !cursors.right.isDown) {
+    if (!lr_down) {
       player.body.setVelocityX(0);
     }
 }
