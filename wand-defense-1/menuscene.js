@@ -2,15 +2,15 @@ class Menu extends Phaser.Scene{
   constructor(config) {
     super(config);
   }
-  
+
   preload() {
-    
+
   }
-  
+
   create() {
     var width = this.cameras.main.width;
     var height = this.cameras.main.height;
-    
+
     var assetText = this.make.text({
         x: width / 2 - 100,
         y: height / 2 - 250,
@@ -20,21 +20,19 @@ class Menu extends Phaser.Scene{
             fill: '#ffffff'
         }
     });
-    
+
     var startText = this.make.text({
-        x: width / 2 - 20,
+        x: width / 2 -85,
         y: height / 2 - 20,
-        text: 'Play!',
+        text: '< Start Game >',
         style: {
-            backgroundColor: '#ffffff',
-            baselineX: 50,
-            baselineY: 20,
+            backgroundColor: '#151515',
             font: '20px monospace',
-            fill: '#000000'
+            fill: '#ffffff'
         }
     })
     .setInteractive()
-    .on('pointerdown', () => this.scene.start('castle'));
+    .on('pointerup', () => this.scene.start('castle'));
   }
 }
 

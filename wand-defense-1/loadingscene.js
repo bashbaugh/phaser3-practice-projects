@@ -2,17 +2,17 @@ class Loading extends Phaser.Scene{
   constructor(config) {
     super(config);
   }
-  
+
   loadAllAssets() {
     this.load.tilemapTiledJSON('castle', 'assets/tilemaps/castle_basic.json');
     this.load.spritesheet('tiles', 'assets/tilesets/castle_basic.png', {frameWidth: 64, frameHeight: 64});
     this.load.image('player', 'assets/spritesheets/wizardplayer.png');
   }
-  
+
   preload() {
     var width = this.cameras.main.width;
     var height = this.cameras.main.height;
-    
+
     var percentText = this.make.text({
         x: width / 2,
         y: height / 2 - 5,
@@ -23,7 +23,7 @@ class Loading extends Phaser.Scene{
         }
     });
     percentText.setOrigin(0.5, 0.5);
-    
+
     var assetText = this.make.text({
         x: width / 2,
         y: height / 2 + 50,
@@ -33,24 +33,26 @@ class Loading extends Phaser.Scene{
             fill: '#ffffff'
         }
     });
-  
+
     assetText.setOrigin(0.5, 0.5);
-    
+
     this.load.on('progress', function (value) {
         percentText.setText(parseInt(value * 100) + '%');
     });
-    
+
     this.load.on('fileprogress', function (file) {
         assetText.setText('Loading asset: ' + file.key);
     });
-  
+
     this.load.on('complete', function () {
         percentText.setText("100%");
         assetText.destroy();
-        
+
         setTimeout(() => this.scene.scene.start('menu'), 1000);
     });
-    
+
+    this.scene.scene.input.setDefaultCursor('url(assets/images/cursor.cur) 16 16, pointer');
+
     this.loadAllAssets();
   }
 }
