@@ -5,7 +5,7 @@ class Loading extends Phaser.Scene{
 
   loadAllAssets() {
     this.load.tilemapTiledJSON('castle', 'assets/tilemaps/castle_basic.json');
-    this.load.spritesheet('tiles', 'assets/tilesets/castle_basic.png', {frameWidth: 64, frameHeight: 64});
+    this.load.spritesheet('tiles', 'assets/tilesets/pave-1.png', {frameWidth: 64, frameHeight: 64});
     this.load.image('player', 'assets/spritesheets/wizardplayer.png');
   }
 
@@ -48,7 +48,7 @@ class Loading extends Phaser.Scene{
         percentText.setText("100%");
         assetText.destroy();
 
-        setTimeout(() => this.scene.scene.start('menu'), 1000);
+        setTimeout(() => this.scene.scene.start('menu'), 500);
     });
 
     this.scene.scene.input.setDefaultCursor('url(assets/images/cursor.cur) 16 16, pointer');
